@@ -36,7 +36,7 @@ p.meta {
 
 #controls {
     position: absolute;
-    top: 30px;
+    top: 10px;
     left: 0px;
     width: 310px;
     font-size: 12px;
@@ -200,7 +200,7 @@ pre, code { font-family: "Menlo", monospace; }
     <script>
         
         // Get total number of sample records in data for later use
-        d3.csv("agg.csv", function (data) {
+        d3.csv("viz_agg.csv", function (data) {
             sum = d3.sum(data, function (d) {
                 return d.COUNT; 
             });
@@ -211,7 +211,10 @@ pre, code { font-family: "Menlo", monospace; }
             RESULT = test.options[test.selectedIndex].value + ": Test result";
             DISORDER = test.options[test.selectedIndex].value + ": Disease state";
             
-            d3.csv("agg.csv", function(csv) {
+            console.log(RESULT);
+            console.log(DISORDER);
+            
+            d3.csv("viz_agg.csv", function(csv) {
                 
                 var filtered = csv;
                 var resultChoices = [];
@@ -297,26 +300,26 @@ pre, code { font-family: "Menlo", monospace; }
                 if (tpnChoices.length > 0) {
                     dims = dims.concat("TPN")
                 } else {
-                    tpnChoices = ['TPN feeding','No TPN feeding','Unknown']
+                    tpnChoices = ['TPN feeding','No TPN feeding','Feeding type unknown']
                 };
                 
                 if (ecChoices.length > 0) {
                     dims = dims.concat("Early collection")
                 } else {
-                    ecChoices = ['Collected early','Not collected early','Unknown']
+                    ecChoices = ['Collected early','Not collected early','Collection timing unknown']
                 };
                 
                 if (trChoices.length > 0) {
                     dims = dims.concat("Transfusion state")
                 } else {
-                    trChoices = ['Transfused','Not transfused']
+                    trChoices = ['Transfused','Not transfused','Transfusion state unknown']
                 };
                 
                 
                 if (ethChoices.length > 0) {
                     dims = dims.concat("Ethnicity")
                 } else {
-                    ethChoices = ['American Indian','Asian','Black','Hispanic','Mixed/Other','White','Unknown']
+                    ethChoices = ['American Indian','Asian','Black','Hispanic','Mixed/Other','White','Ethnicity unknown']
                 };
                 
                 if (allChoices.length > 0) {
@@ -531,7 +534,7 @@ pre, code { font-family: "Menlo", monospace; }
         <input type="checkbox" class="tpnCheck" value="TPN feeding"> TPN (Total Parenteral Nutrition)
         &nbsp;&nbsp;
         <input type="checkbox" class="tpnCheck" value="No TPN feeding"> No TPN<br>
-        <input type="checkbox" class="tpnCheck" value="Unknown"> Feeding type unknown
+        <input type="checkbox" class="tpnCheck" value="Feeding type unknown"> Feeding type unknown
         &nbsp;&nbsp;
         
         <br><br>
@@ -539,7 +542,7 @@ pre, code { font-family: "Menlo", monospace; }
         <i>Early Collection</i><br>
         <input type="checkbox" class="ecCheck" value="Collected early"> Collected early (prior to 24 hours of age)<br>
         <input type="checkbox" class="ecCheck" value="Not collected early"> Not collected early<br>
-        <input type="checkbox" class="ecCheck" value="Unknown"> Collection timing unknown
+        <input type="checkbox" class="ecCheck" value="Collection timing unknown"> Collection timing unknown
         &nbsp;&nbsp;
         
         <br><br>
@@ -547,7 +550,8 @@ pre, code { font-family: "Menlo", monospace; }
         <i>Transfusion State</i><br>
         <input type="checkbox" class="trCheck" value="Transfused"> Transfused
         &nbsp;&nbsp;
-        <input type="checkbox" class="trCheck" value="Not transfused"> Not transfused
+        <input type="checkbox" class="trCheck" value="Not transfused"> Not transfused<br>
+        <input type="checkbox" class="trCheck" value="Transfusion state unknown"> Transfusion state unknown
         &nbsp;&nbsp;
         
         <br><br>
@@ -563,7 +567,7 @@ pre, code { font-family: "Menlo", monospace; }
         <input type="checkbox" class="ethCheck" value="Mixed/Other"> Mixed/Other
         &nbsp;
         <input type="checkbox" class="ethCheck" value="White"> White<br>
-        <input type="checkbox" class="ethCheck" value="Unknown"> Unknown
+        <input type="checkbox" class="ethCheck" value="Ethnicity unknown"> Ethnicity unknown
         &nbsp;&nbsp;
         
         <br><br>
@@ -599,7 +603,7 @@ pre, code { font-family: "Menlo", monospace; }
         
         d3.select('#diso').selectAll("*").remove();
             
-        d3.csv("tests.csv", function (data) {
+        d3.csv("viz_tests.csv", function (data) {
             dos = data.map(function(d) {
                 return d[RT];
             });
