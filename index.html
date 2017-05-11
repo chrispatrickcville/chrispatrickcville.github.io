@@ -211,9 +211,6 @@ pre, code { font-family: "Menlo", monospace; }
             RESULT = test.options[test.selectedIndex].value + ": Test result";
             DISORDER = test.options[test.selectedIndex].value + ": Disease state";
             
-            console.log(RESULT);
-            console.log(DISORDER);
-            
             d3.csv("viz_agg.csv", function(csv) {
                 
                 var filtered = csv;
@@ -335,10 +332,6 @@ pre, code { font-family: "Menlo", monospace; }
                     });
                 }
                 
-                console.log(RESULT);
-                console.log(DISORDER);
-                console.log(dims);
-                
                 // Get current number of samples shown after filtering
                 curr = d3.sum(filtered, function(d) { return d.COUNT; });
                  
@@ -446,7 +439,71 @@ pre, code { font-family: "Menlo", monospace; }
             };
             reader.readAsText(file);
         });
-</script>
+        
+        // create a function to check all boxes
+        function checkAll() {
+            d3.selectAll("input").property("checked", true);
+            drawData();
+        }    
+        
+        // create a function to both redraw data and change list of disorder
+        function changeAll() {
+            drawData();
+            updateDis();
+        }
+        
+        function updateDis() {
+            RT = test.options[test.selectedIndex].value;
+        
+            d3.select('#diso').selectAll("*").remove();
+            
+            d3.csv("viz_tests.csv", function (data) {
+                dos = data.map(function(d) {
+                    return d[RT];
+                });
+            
+                d3.select("#diso").append("p").html("Disorder(s) tested for by the " + RT + " test:<br>-----<br>" + dos);
+            });
+        }
+    
+        // create a function to automatically check and uncheck boxes
+        // for false positive analysis
+        function falsePos() {
+            d3.selectAll("input").property("checked", true);
+            d3.select("#pass").property("checked", false);
+            d3.select("#unsat").property("checked", false);
+            d3.select("#disorder").property("checked", false);
+            drawData();
+        }
+        
+    // create a function to automatically check and uncheck boxes
+    // for false negative analysis
+        function falseNeg() {
+            d3.selectAll("input").property("checked", true);
+            d3.select("#abnormal").property("checked", false);
+            d3.select("#critical").property("checked", false);
+            d3.select("#unsat").property("checked", false);
+            d3.select("#disorderNoMatch").property("checked", false);
+            d3.select("#noDisease").property("checked", false);
+            drawData();
+        }
+        
+        // create function to change visibility of instructions
+        function makeVis() {
+            d3.select("#instCol").style("visibility", "visible");
+            d3.select("#instRow").style("visibility", "visible");
+            d3.select("#instGroup").style("visibility", "visible");
+            d3.select("#vis").style("opacity",0.5);
+        }
+        
+        function makeHid() {
+            d3.select("#instCol").style("visibility", "hidden");
+            d3.select("#instRow").style("visibility", "hidden");
+            d3.select("#instGroup").style("visibility", "hidden");
+            d3.select("#vis").style("opacity",1);
+        }    
+    
+    </script>
 
 <body onload="drawData()">
 <h1>Newborn Screening: Examining Test Results</h1>
@@ -576,46 +633,13 @@ pre, code { font-family: "Menlo", monospace; }
         
         <button onclick="falseNeg()">Pass Results in Presence of Disease</button>  
     </div>
-    
-    <div id="inst" onmouseover=makeVis() onmouseout=makeHid()></div>
-    <div id="instCol"></div>
-    <div id="instRow"></div>
-    <div id="instGroup"></div>
-    <div id="stats"></div>
-    <div id="diso"></div>
-    <div id="cred">Parallel Sets created by Jason Davies, see <a href="https://www.jasondavies.com/parallel-sets/">https://www.jasondavies.com/parallel-sets/</a></div>
-    
+        
     <script>
-    // create a function to check all boxes
-    function checkAll() {
-        d3.selectAll("input").property("checked", true);
-        drawData();
-    }    
+    // load current disorder on first loading page
+    updateDis();   
         
-    // create a function to both redraw data and change list of disorder
-    function changeAll() {
-        drawData();
-        updateDis();
-    }
-        
-    function updateDis() {
-        RT = test.options[test.selectedIndex].value;
-        
-        d3.select('#diso').selectAll("*").remove();
-            
-        d3.csv("viz_tests.csv", function (data) {
-            dos = data.map(function(d) {
-                return d[RT];
-            });
-            d3.select("#diso").append("p").html("Disorder(s) tested for by the " + RT + " test:<br>-----<br>" + dos);
-        });
-    }
-    
     // check all boxes on first loading page
     d3.selectAll("input").property("checked", true);
-        
-    // load current disorder on first loading page
-    updateDis();
         
     // show text for showing instructions
     d3.select("#inst").append("p").text("Hover over to show instructions for interacting with the visualization")       
@@ -634,45 +658,16 @@ pre, code { font-family: "Menlo", monospace; }
     
     // redraw data on any change in checkboxes
     d3.selectAll("input").on("change", drawData);
+    </script>    
+
     
-    // create a function to automatically check and uncheck boxes
-    // for false positive analysis
-    function falsePos() {
-        d3.selectAll("input").property("checked", true);
-        d3.select("#pass").property("checked", false);
-        d3.select("#unsat").property("checked", false);
-        d3.select("#disorder").property("checked", false);
-        drawData();
-    }
-        
-    // create a function to automatically check and uncheck boxes
-    // for false negative analysis
-    function falseNeg() {
-        d3.selectAll("input").property("checked", true);
-        d3.select("#abnormal").property("checked", false);
-        d3.select("#critical").property("checked", false);
-        d3.select("#unsat").property("checked", false);
-        d3.select("#disorderNoMatch").property("checked", false);
-        d3.select("#noDisease").property("checked", false);
-        drawData();
-    }
-        
-    // create function to change visibility of instructions
-    function makeVis() {
-        d3.select("#instCol").style("visibility", "visible");
-        d3.select("#instRow").style("visibility", "visible");
-        d3.select("#instGroup").style("visibility", "visible");
-        d3.select("#vis").style("opacity",0.5);
-    }
-    
-    function makeHid() {
-        d3.select("#instCol").style("visibility", "hidden");
-        d3.select("#instRow").style("visibility", "hidden");
-        d3.select("#instGroup").style("visibility", "hidden");
-        d3.select("#vis").style("opacity",1);
-    }    
-    
-    </script>
+    <div id="inst" onmouseover=makeVis() onmouseout=makeHid()></div>
+    <div id="instCol"></div>
+    <div id="instRow"></div>
+    <div id="instGroup"></div>
+    <div id="stats"></div>
+    <div id="diso"></div>
+    <div id="cred">Parallel Sets created by Jason Davies, see <a href="https://www.jasondavies.com/parallel-sets/">https://www.jasondavies.com/parallel-sets/</a></div>
     
     <p class="meta">
     <div id="vis">
