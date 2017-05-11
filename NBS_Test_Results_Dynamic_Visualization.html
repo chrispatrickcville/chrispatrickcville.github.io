@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Newborn Screening: Examining Test Results</title>
+<link rel="stylesheet" type="text/css" href="d3-parsets-master/d3.parsets.css">
+<style>
+
+body {
+  font-family: sans-serif;
+  font-size: 16px;
+  width: 1350px;
+  height: 800px;
+  margin: 1em auto;
+  position: relative;
+}
+h1, h2, .dimension text {
+  text-align: center;
+  font-family: "lucida sans","PT Sans", Helvetica;
+  font-weight: 300;
+}
+h1 {
+  font-size: 1.75em;
+  margin: .5em 0 0 0;
+}
+h2 {
+  font-size: 2em;
+  margin: 1em 0 0.5em;
+  border-bottom: solid #ccc 1px;
+}
+p.meta, p.footer {
+  font-size: 13px;
+  color: #333;
+}
+p.meta {
+  text-align: center;
+}
+
+#controls {
+    position: absolute;
+    top: 30px;
+    left: 0px;
+    width: 310px;
+    font-size: 12px;
+    text-align: left;
+}
+    
+#vis {
+    position: absolute;
+    top: 60px;
+    left: 300px;
+}
+    
+#inst {
+    position: absolute;
+    top: 10px;
+    left: 1205px;
+    width: 125px;
+    font-size: 12px;
+    text-align: center;
+    border-radius: 10px;
+    background-color: #e7e7e7;
+    padding-left: 12px;
+    padding-right: 12px;
+} 
+    
+#instCol {
+    position: absolute; 
+    top: 225px;
+    left: 120px;
+    background-color: #DAF7A6;
+    width: 135px;
+    padding-left: 13px;
+    padding-right: 13px;
+    font-size: 12px;
+    border-radius: 10px;
+    visibility: hidden;
+}
+
+#instRow {
+    position: absolute; 
+    top: 25px;
+    left: 540px;
+    background-color: #DAF7A6;
+    width: 560px;
+    padding-left: 13px;
+    padding-right: 13px;
+    font-size: 12px;
+    border-radius: 10px;
+    visibility: hidden;
+}  
+    
+#instGroup {
+    position: absolute; 
+    top: 470px;
+    left: 120px;
+    background-color: #DAF7A6;
+    width: 130px;
+    padding-left: 13px;
+    padding-right: 13px;
+    font-size: 12px;
+    border-radius: 10px;
+    visibility: hidden;
+}    
+    
+
+#stats {
+    position: absolute;  
+    text-align: center;
+    top: 105px;
+    left: 1205px;
+    width: 125px;
+    background-color: antiquewhite;
+    padding-left: 13px;
+    padding-right: 13px;
+    font-size: 13px;
+    border-radius: 10px;
+}
+    
+#diso {
+    position: absolute;
+    text-align: center;
+    top: 330px;
+    left: 1205px;
+    width: 125px;
+    background-color: antiquewhite;
+    padding-top: 13px;
+    padding-bottom: 13px;
+    padding-left: 13px;
+    padding-right: 13px;
+    font-size: 13px;
+    border-radius: 10px;
+}
+    
+#cred {
+    position: absolute;
+    top: 665px;
+    left: 730px;
+    font-size: 11px;
+}
+
+button, button2 {
+    position: absolute;
+    background-color: #e7e7e7; 
+    border: 1px solid black;
+    color: black;
+    padding: 8px 15px;
+    border-radius: 6px; 
+    cursor: pointer;
+    width: 175px;
+    left: 40px;
+}
+    
+button2 {
+    text-align: center;
+    background-color: #e7e7e7; 
+    padding: 2px 5px;
+    cursor: pointer;
+    width: 75px;
+    left: 160px; 
+}
+    
+text.icicle { pointer-events: none; }
+
+.options { font-size: 12px; text-align: center; padding: 5px 0; }
+.curves { float: left; }
+.source { float: right; }
+pre, code { font-family: "Menlo", monospace; }
+
+.html .value,
+.javascript .string,
+.javascript .regexp {
+  color: #756bb1;
+}
+
+.html .tag,
+.css .tag,
+.javascript .keyword {
+  color: #3182bd;
+}
+
+.comment {
+  color: #636363;
+}
+
+.html .doctype,
+.javascript .number {
+  color: #31a354;
+}
+
+.html .attribute,
+.css .attribute,
+.javascript .class,
+.javascript .special {
+  color: #e6550d;
+    
+}
+</style>
+    
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="d3-parsets-master/d3.parsets.js"></script>
+    <script>
+        
+        // Get total number of sample records in data for later use
+        d3.csv("agg.csv", function (data) {
+            sum = d3.sum(data, function (d) {
+                return d.COUNT; 
+            });
+        });
+        
+        function drawData() {
+            
+            RESULT = test.options[test.selectedIndex].value + ": Test result";
+            DISORDER = test.options[test.selectedIndex].value + ": Disease state";
+            
+            d3.csv("agg.csv", function(csv) {
+                
+                var filtered = csv;
+                var resultChoices = [];
+                var disChoices = [];
+                var wtChoices = [];
+                var tpnChoices = [];
+                var ecChoices = [];
+                var trChoices = [];
+                var ethChoices = [];
+            
+                 d3.selectAll(".resultCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        resultChoices.push(cb.property("value"));
+                    }  
+                });
+                
+                d3.selectAll(".disCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        disChoices.push(cb.property("value"));
+                    }
+                });
+                
+                d3.selectAll(".wtCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        wtChoices.push(cb.property("value"));
+                    }
+                });
+                
+                d3.selectAll(".tpnCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        tpnChoices.push(cb.property("value"));
+                    }
+                });
+                
+                d3.selectAll(".ecCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        ecChoices.push(cb.property("value"));
+                    }
+                });
+                
+                d3.selectAll(".trCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        trChoices.push(cb.property("value"));
+                    }
+                });
+                
+                d3.selectAll(".ethCheck").each(function(d) {
+                    cb = d3.select(this);
+                    if(cb.property("checked")){
+                        ethChoices.push(cb.property("value"));
+                    }
+                });
+                
+                var allChoices = wtChoices.concat(resultChoices, disChoices, tpnChoices, ecChoices, trChoices, ethChoices);
+                
+                var dims = [];
+                
+                if (resultChoices.length > 0) {
+                    dims = dims.concat(RESULT)
+                } else {
+                    resultChoices = ['Pass','Abnormal','Critical','Unsat']
+                };
+                
+                if (disChoices.length > 0) {
+                    dims = dims.concat(DISORDER)
+                } else {
+                    disChoices = ['Infant has a disorder targeted by this test','Infant has a disorder, but not one targeted by this test','No disease']
+                };
+                                
+                if (wtChoices.length > 0) {
+                    dims = dims.concat("Weight group")
+                } else {
+                    wtChoices = ['0-1000 gms','1001-1500 gms','1501-2000 gms','2001-2500 gms','> 2500 gms']
+                };
+                
+                
+                if (tpnChoices.length > 0) {
+                    dims = dims.concat("TPN")
+                } else {
+                    tpnChoices = ['TPN feeding','No TPN feeding','Unknown']
+                };
+                
+                if (ecChoices.length > 0) {
+                    dims = dims.concat("Early collection")
+                } else {
+                    ecChoices = ['Collected early','Not collected early','Unknown']
+                };
+                
+                if (trChoices.length > 0) {
+                    dims = dims.concat("Transfusion state")
+                } else {
+                    trChoices = ['Transfused','Not transfused']
+                };
+                
+                
+                if (ethChoices.length > 0) {
+                    dims = dims.concat("Ethnicity")
+                } else {
+                    ethChoices = ['American Indian','Asian','Black','Hispanic','Mixed/Other','White','Unknown']
+                };
+                
+                if (allChoices.length > 0) {
+                    filtered = csv.filter( function(d, i) {
+                        return (
+                            resultChoices.includes(d[RESULT]) &&
+                            disChoices.includes(d[DISORDER]) &&
+                            wtChoices.includes(d['Weight group']) && 
+                            tpnChoices.includes(d.TPN) &&
+                            ecChoices.includes(d['Early collection']) &&
+                            trChoices.includes(d['Transfusion state']) &&   
+                            ethChoices.includes(d.Ethnicity))
+                    });
+                }
+                
+                console.log(RESULT);
+                console.log(DISORDER);
+                console.log(dims);
+                
+                // Get current number of samples shown after filtering
+                curr = d3.sum(filtered, function(d) { return d.COUNT; });
+                 
+                // Get percentage of total shown on the screen
+                per = d3.format(".2f")((+curr / +sum) * 100);
+                
+                pr_sum = d3.format(",")(sum);
+                pr_curr = d3.format(",")(curr);
+                 
+                d3.select('#stats').selectAll("*").remove();
+                 
+                // Show total number of records on screen
+                d3.select("#stats").append("p")
+                    .html("Total number of samples in all:<br><b>" + pr_sum 
+                          + "<br><br>" + "</b>Samples currently shown:<br><b>" + pr_curr 
+                          + "<br><br>" + "</b>Percent of total samples currently shown:<br><b>" + per + "%");
+            
+                d3.select('#mainGraph').selectAll("*").remove(); 
+                 
+                var chart = d3.parsets()
+                    .value(function(d) {return d["COUNT"]})
+                    .dimensions(dims);
+
+                var vis = d3.select("#mainGraph")
+                    .attr("width", chart.width())
+                    .attr("height", chart.height());
+
+                var partition = d3.layout.partition()
+                    .sort(null)
+                    .size([chart.width(), chart.height() * 5 / 4])
+                    .children(function(d) { return d.children ? d3.values(d.children) : null; })
+                    .value(function(d) { return d.count; });
+    
+                var ice = false;
+                
+                vis.datum(filtered)
+                    .call(chart);	
+
+            });
+            
+        }
+
+        function curves() {
+            var t = vis.transition().duration(500);
+            if (ice) {
+                t.delay(1000);
+                icicle();
+            }
+            t.call(chart.tension(this.checked ? .5 : 1));
+        }
+         
+        function iceTransition(g) {
+            return g.transition().duration(1000);
+        }
+        
+        function ribbonPath(s, t, tension) {
+            var sx = s.node.x0 + s.x0,
+                tx = t.node.x0 + t.x0,
+                sy = s.dimension.y0,
+                ty = t.dimension.y0;
+            return (tension === 1 ? [
+                "M", [sx, sy],
+                "L", [tx, ty],
+                "h", t.dx,
+                "L", [sx + s.dx, sy],
+                "Z"]
+                    : ["M", [sx, sy],
+                       "C", [sx, m0 = tension * sy + (1 - tension) * ty], " ",
+                       [tx, m1 = tension * ty + (1 - tension) * sy], " ", [tx, ty],
+                       "h", t.dx,
+                       "C", [tx + t.dx, m1], " ", [sx + s.dx, m0], " ", [sx + s.dx, sy],
+                       "Z"]).join("");
+        }
+        
+        function stopClick() { d3.event.stopPropagation(); }
+        
+        // Given a text function and width function, truncates the text if necessary to
+        // fit within the given width.
+        function truncateText(text, width) {
+            return function(d, i) {
+                var t = this.textContent = text(d, i),
+                    w = width(d, i);
+                if (this.getComputedTextLength() < w) return t;
+                this.textContent = "…" + t;
+                var lo = 0,
+                    hi = t.length + 1,
+                    x;
+                while (lo < hi) {
+                    var mid = lo + hi >> 1;
+                    if ((x = this.getSubStringLength(0, mid)) < w) lo = mid + 1;
+                    else hi = mid;
+                }
+                return lo > 1 ? t.substr(0, lo - 2) + "…" : "";
+            };
+        }
+        
+        d3.select("#file").on("change", function() {
+            var file = this.files[0],
+                reader = new FileReader;
+            reader.onloadend = function() {
+                var csv = d3.csv.parse(reader.result);
+                vis.datum(csv).call(chart
+                                    .value(csv[0].hasOwnProperty("COUNT") ? function(d) { return +d.Number; } : 1)
+                                    .dimensions(function(d) { return d3.keys(d[0]).filter(function(d) { return d !== "Number"; }).sort(); }));
+            };
+            reader.readAsText(file);
+        });
+</script>
+
+<body onload="drawData()">
+<h1>Newborn Screening: Examining Test Results</h1>
+    
+<!--    <p></p>-->
+    
+    <div id="controls">
+    <i>Test</i><br>
+        <select id="test">
+            <option value="BIOT">BIOT</option>
+            <option value="C0">C0</option>
+            <option value="C6">C6</option>
+            <option value="C8">C8</option>
+            <option value="C8_C10">C8_C10</option>
+            <option value="C10">C10</option>
+            <option value="C14">C14</option>
+            <option value="C14_1">C14_1</option>
+            <option value="C16">C16</option>
+            <option value="C16_OH">C16_OH</option>
+            <option value="C18_1_OH">C18_1_OH</option>
+            <option value="C2">C2</option>
+            <option value="C3">C3</option>
+            <option value="C3_C2">C3_C2</option>
+            <option value="C4_DC">C4_DC</option>
+            <option value="C5">C5</option>
+            <option value="C5_1">C5_1</option>
+            <option value="C5_DC">C5_DC</option>
+            <option value="C5_OH">C5_OH</option>
+            <option value="CAH" selected="selected">CAH</option>
+            <option value="CF">CF</option>
+            <option value="CIT">CIT</option>
+            <option value="GALT">GALT</option>
+            <option value="GALH">GALH</option>
+            <option value="HCU">HCU</option>
+            <option value="HGB">HGB</option>
+            <option value="IRT">IRT</option>
+            <option value="MSUD">MSUD</option>
+            <option value="PHE_TYR">PHE_TYR</option>
+            <option value="PKU">PKU</option>
+            <option value="SUAC">SUAC</option> 
+            <option value="T4">T4</option>       
+            <option value="TGAL">TGAL</option>
+            <option value="TSH">TSH</option>
+            <option value="TREC">TREC</option>
+            <option value="TYR">TYR</option>  
+        </select>
+        
+        <button2 onclick="checkAll()">Check All</button2>
+    
+        <p></p>
+    
+        <i>Test Result</i><br>  
+        <input type="checkbox" id="pass" class="resultCheck" value="Pass"> Pass
+        &nbsp;&nbsp;
+        <input type="checkbox" id="abnormal" class="resultCheck" value="Abnormal"> Abnormal
+        &nbsp;&nbsp;
+        <input type="checkbox" id="critical" class="resultCheck" value="Critical"> Critical
+        &nbsp;&nbsp;
+        <input type="checkbox" id="unsat" class="resultCheck" value="Unsat"> Unsat
+        &nbsp;&nbsp;
+        
+        <p></p>
+        
+        <i>Disease State</i><br>
+        <input type="checkbox" id="disorder" class="disCheck" value="Infant has a disorder targeted by this test"> Infant has a disorder targeted by this test<br>
+        <input type="checkbox" id="disorderNoMatch" class="disCheck" value="Infant has a disorder, but not one targeted by this test"> Infant has a disorder, but not one targeted<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; by this test<br>
+        <input type="checkbox" id="noDisease" class="disCheck" value="No disease"> No disease
+        &nbsp;&nbsp;
+        
+        <p></p>
+        
+        <i>Weight Group</i><br>
+        <input type="checkbox" class="wtCheck" value="0-1000 gms"> 0-1000 gms
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="checkbox" class="wtCheck" value="1001-1500 gms"> 1001-1500 gms<br>
+        <input type="checkbox" class="wtCheck" value="1501-2000 gms"> 1501-2000 gms
+        &nbsp;&nbsp;
+        <input type="checkbox" class="wtCheck" value="2001-2500 gms"> 2001-2500 gms<br>
+        <input type="checkbox" class="wtCheck" value="> 2500 gms"> > 2500 gms
+        &nbsp;&nbsp;
+        
+        <p></p>
+    
+        <i>Feeding Type</i><br>
+        <input type="checkbox" class="tpnCheck" value="TPN feeding"> TPN (Total Parenteral Nutrition)
+        &nbsp;&nbsp;
+        <input type="checkbox" class="tpnCheck" value="No TPN feeding"> No TPN<br>
+        <input type="checkbox" class="tpnCheck" value="Unknown"> Feeding type unknown
+        &nbsp;&nbsp;
+        
+        <br><br>
+        
+        <i>Early Collection</i><br>
+        <input type="checkbox" class="ecCheck" value="Collected early"> Collected early (prior to 24 hours of age)<br>
+        <input type="checkbox" class="ecCheck" value="Not collected early"> Not collected early<br>
+        <input type="checkbox" class="ecCheck" value="Unknown"> Collection timing unknown
+        &nbsp;&nbsp;
+        
+        <br><br>
+        
+        <i>Transfusion State</i><br>
+        <input type="checkbox" class="trCheck" value="Transfused"> Transfused
+        &nbsp;&nbsp;
+        <input type="checkbox" class="trCheck" value="Not transfused"> Not transfused
+        &nbsp;&nbsp;
+        
+        <br><br>
+        
+        <i>Ethnicity</i><br>
+        <input type="checkbox" class="ethCheck" value="American Indian"> American Indian
+        &nbsp;&nbsp;
+        <input type="checkbox" class="ethCheck" value="Asian"> Asian
+        &nbsp;&nbsp;
+        <input type="checkbox" class="ethCheck" value="Black"> Black<br>
+        <input type="checkbox" class="ethCheck" value="Hispanic"> Hispanic
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <input type="checkbox" class="ethCheck" value="Mixed/Other"> Mixed/Other
+        &nbsp;
+        <input type="checkbox" class="ethCheck" value="White"> White<br>
+        <input type="checkbox" class="ethCheck" value="Unknown"> Unknown
+        &nbsp;&nbsp;
+        
+        <br><br>
+        <button onclick="falsePos()">Abnormal/Critical Results in Absence of Disease</button>
+        <br><br><br><br>
+        
+        <button onclick="falseNeg()">Pass Results in Presence of Disease</button>  
+    </div>
+    
+    <div id="inst" onmouseover=makeVis() onmouseout=makeHid()></div>
+    <div id="instCol"></div>
+    <div id="instRow"></div>
+    <div id="instGroup"></div>
+    <div id="stats"></div>
+    <div id="diso"></div>
+    <div id="cred">Parallel Sets created by Jason Davies, see <a href="https://www.jasondavies.com/parallel-sets/">https://www.jasondavies.com/parallel-sets/</a></div>
+    
+    <script>
+    // create a function to check all boxes
+    function checkAll() {
+        d3.selectAll("input").property("checked", true);
+        drawData();
+    }    
+        
+    // create a function to both redraw data and change list of disorder
+    function changeAll() {
+        drawData();
+        updateDis();
+    }
+        
+    function updateDis() {
+        RT = test.options[test.selectedIndex].value;
+        
+        d3.select('#diso').selectAll("*").remove();
+            
+        d3.csv("tests.csv", function (data) {
+            dos = data.map(function(d) {
+                return d[RT];
+            });
+            d3.select("#diso").append("p").html("Disorder(s) tested for by the " + RT + " test:<br>-----<br>" + dos);
+        });
+    }
+    
+    // check all boxes on first loading page
+    d3.selectAll("input").property("checked", true);
+        
+    // load current disorder on first loading page
+    updateDis();
+        
+    // show text for showing instructions
+    d3.select("#inst").append("p").text("Hover over to show instructions for interacting with the visualization")       
+        
+    // column instructions
+    d3.select("#instCol").append("p").text("To change the vertical order of dimensions, move the cursor over the name of the dimension (e.g., 'Early collection') until you see an up and down arrow, then click and drag the row to the new location.");
+        
+    // row instructions
+    d3.select("#instRow").append("p").text("To change the horizontal order for a dimension's values, move the cursor over the value name (e.g., 'Not collected early') until you see a left and right arrow, then click and drag to the new location. In addition to the arrow option, you will also see a pop-up for sorting by alpha (alphabetically) or size.");   
+        
+    // group instructions
+    d3.select("#instGroup").append("p").text("To find the count and percentage of a particular subgroup, hover over the connecting bar from one dimension to another. The features of that subgroup will pop up along with its counts and the percentage that group represents of the currently displayed samples.");    
+    
+    // if test is updated, call drawData
+    d3.select("#test").on("change", changeAll);
+    
+    // redraw data on any change in checkboxes
+    d3.selectAll("input").on("change", drawData);
+    
+    // create a function to automatically check and uncheck boxes
+    // for false positive analysis
+    function falsePos() {
+        d3.selectAll("input").property("checked", true);
+        d3.select("#pass").property("checked", false);
+        d3.select("#unsat").property("checked", false);
+        d3.select("#disorder").property("checked", false);
+        drawData();
+    }
+        
+    // create a function to automatically check and uncheck boxes
+    // for false negative analysis
+    function falseNeg() {
+        d3.selectAll("input").property("checked", true);
+        d3.select("#abnormal").property("checked", false);
+        d3.select("#critical").property("checked", false);
+        d3.select("#unsat").property("checked", false);
+        d3.select("#disorderNoMatch").property("checked", false);
+        d3.select("#noDisease").property("checked", false);
+        drawData();
+    }
+        
+    // create function to change visibility of instructions
+    function makeVis() {
+        d3.select("#instCol").style("visibility", "visible");
+        d3.select("#instRow").style("visibility", "visible");
+        d3.select("#instGroup").style("visibility", "visible");
+        d3.select("#vis").style("opacity",0.5);
+    }
+    
+    function makeHid() {
+        d3.select("#instCol").style("visibility", "hidden");
+        d3.select("#instRow").style("visibility", "hidden");
+        d3.select("#instGroup").style("visibility", "hidden");
+        d3.select("#vis").style("opacity",1);
+    }    
+    
+    </script>
+    
+    <p class="meta">
+    <div id="vis">
+        <svg id="mainGraph"> </svg>
+        <noscript></noscript></div>
